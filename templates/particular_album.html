@@ -1,0 +1,81 @@
+{% extends "base.html" %} {% block title %}User Album{% endblock title %} 
+{%block content %}
+<button id="add_song_in_album" onclick="toggleDisplay('songWindow')">
+  Add More Songs in this Album
+</button>
+<div class="album_details">
+  <strong>Title :</strong><span>{{artist_album.title}}</span><br>
+  <strong>Stage Name :</strong><span>{{artist_album.artist.stage_name}}</span><br>
+  <strong>Private :</strong><span>{{artist_album.is_private}}</span><br>
+  <strong>Created At :</strong><span>{{artist_album.created_at}}</span><br>
+  <strong>Last Updated :</strong><span>{{artist_album.updated_at}}</span><br>
+</div>
+<div
+  id="songWindow"
+  class="window"
+  style="display: none; border: 1px solid #ccc; padding: 15px; margin-top: 10px"
+>
+  <div class="search_song">
+    <input
+      type="text"
+      name="song_input"
+      id="song_input"
+      placeholder="Enter title of your song"
+    />
+  </div>
+
+  <div id="search_results_for_album_song"></div>
+</div>
+
+<script>
+  // 1. Toggle Function
+  function toggleDisplay(id) {
+    const el = document.getElementById(id);
+    if (el) {
+      el.style.display =
+        getComputedStyle(el).display === "none" ? "block" : "none";
+    }
+  }
+
+  // 2. Search Logic
+  const album_song_search_input = document.getElementById("song_input");
+  const search_results_for_album_song = document.getElementById(
+    "search_results_for_album_song",
+  );
+  print_if_no_results= "<div class='artist-card'>No Songs found with this title</div>";
+  let timeout = null;
+
+  album_song_search_input.addEventListener("input", function (e) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      search_song_for_album();
+    }, 300);
+  });
+
+  function search_song_for_album() {
+    const query = album_song_search_input.value.trim();
+
+    if (query === "") {
+      search_results_for_album_song.innerHTML = "";
+      return;
+    }
+
+    fetch(`/songs/?q=${encodeURIComponent(query)}`)
+      .then((response) => response.json())
+      .then((data) => {
+        displayResults_for_songs(data,print_if_no_results);
+      })
+      .catch((error) => {
+        console.error("Error fetching songs:", error);
+      });
+  }
+
+
+
+  // Placeholder for your Add function
+  function add_this_song_to_this_album(songId) {
+    console.log("Adding song ID:", songId);
+    // Add your fetch logic here to save the song to the album
+  }
+</script>
+{% endblock content %}

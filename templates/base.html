@@ -1,0 +1,517 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}{% endblock title %}</title>
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      }
+
+      body {
+        background: linear-gradient(135deg, #eef2ff, #f8fafc);
+        color: #333;
+        min-height: 100vh;
+      }
+
+      /* NAVBAR */
+      header {
+        background: #1e293b;
+        padding: 15px 40px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        position: relative;
+      }
+
+      nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      nav a {
+        text-decoration: none;
+        color: #cbd5e1;
+        font-weight: 500;
+        transition: 0.2s;
+      }
+
+      nav a:hover {
+        color: white;
+      }
+
+      nav span {
+        font-size: 20px;
+        font-weight: bold;
+        color: #38bdf8;
+      }
+
+      .hidden_block {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+      }
+
+      .nav-btn {
+        background: #38bdf8;
+        padding: 6px 12px;
+        border-radius: 6px;
+      }
+
+      .nav-btn a {
+        color: white;
+      }
+
+      /* ARTIST CIRCLE AVATAR */
+      .artist-avatar {
+        width: 40px;
+        height: 40px;
+        background: #38bdf8;
+        color: #1e293b;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        cursor: pointer;
+        transition: transform 0.2s, border 0.2s;
+        border: 2px solid transparent;
+        user-select: none;
+      }
+
+      .artist-avatar:hover {
+        transform: scale(1.1);
+        border-color: white;
+      }
+
+      /* ARTIST POPUP PANEL */
+      .artist-popup {
+        display: none;
+        position: absolute;
+        top: 70px;
+        right: 40px;
+        width: 280px;
+        background: #1e293b;
+        color: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        z-index: 1001;
+        border: 1px solid #334155;
+        animation: fadeIn 0.3s ease;
+      }
+
+      .artist-popup h3 {
+        margin-bottom: 12px;
+        color: #38bdf8;
+        border-bottom: 1px solid #334155;
+        padding-bottom: 8px;
+      }
+
+      .artist-popup p {
+        font-size: 14px;
+        margin-bottom: 8px;
+        color: #cbd5e1;
+      }
+
+      /* MAIN CONTENT */
+      .container {
+        display: flex;
+        justify-content: center;
+        padding: 30px;
+      }
+
+      .content {
+        width: 100%;
+        max-width: 1200px;
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+      }
+
+      /* SEARCH */
+      .search-container {
+        position: relative;
+        width: 250px;
+      }
+
+      #search-input {
+        width: 100%;
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: 1px solid #475569;
+        background: #334155;
+        color: white;
+      }
+
+      #search-btn {
+        display: none; /* Hidden because we use live search, but logic remains */
+      }
+
+      .results-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        background: white;
+        border: 1px solid #e2e8f0;
+        max-height: 250px;
+        overflow-y: auto;
+        z-index: 1000;
+        border-radius: 0 0 6px 6px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      }
+
+      .artist-card {
+        padding: 10px;
+        cursor: pointer;
+        border-bottom: 1px solid #f1f5f9;
+        color: #1e293b;
+      }
+
+      .artist-card a {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+      }
+
+      .artist-card:hover {
+        background: #f1f5f9;
+      }
+
+      /* MESSAGES */
+      .messages {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 2000;
+      }
+
+      .message {
+        padding: 12px 20px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        font-weight: 500;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .success { background: #9eea83; color: #14532d; }
+      .error { background: #fca5a5; color: #7f1d1d; }
+
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      /* PLAYLIST BUTTON & FORM */
+      #createPlaylistButton {
+        margin: 0 30px 20px;
+        padding: 10px 18px;
+        background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.3s;
+      }
+
+      #createFormContainer {
+        display: none;
+        margin: 0 30px 20px;
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        width: 320px;
+      }
+
+      #playlist-form { display: flex; flex-direction: column; gap: 12px; }
+      #playlist-form input, #playlist-form select {
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid #cbd5e1;
+      }
+      #playlist-form button {
+        padding: 10px;
+        background: #1e293b;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      /* TOAST NOTIFICATION STYLES */
+      .toast-container {
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          z-index: 9999;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+      }
+
+      .toast {
+          background: #1e293b;
+          color: white;
+          padding: 16px 24px;
+          border-radius: 10px;
+          box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+          border-left: 5px solid #38bdf8;
+          min-width: 250px;
+          animation: slideIn 0.4s ease forwards;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+      }
+
+      @keyframes slideIn {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+      }
+
+      @keyframes fadeOut {
+          from { transform: translateX(0); opacity: 1; }
+          to { transform: translateX(100%); opacity: 0; }
+      }
+    </style>
+    
+  </head>
+
+  <body>
+    <header>
+      <nav>
+        <a href="{% url 'home' %}"><span>Auth Sys</span></a>
+
+        <div class="hidden_block">
+          <div class="nav-btn">
+            <a href="{% url 'removelike' %}">Remove Like</a>
+          </div>
+
+          <div class="search-container">
+            <input type="text" id="search-input" placeholder="Search artist..." />
+            <button id="search-btn">Search</button>
+            <div id="results" class="results-dropdown"></div>
+          </div>
+
+          {% if user.is_authenticated %}
+            {% if user.is_artist %}
+              <a href="{% url 'albumview' %}">My Albums</a>
+              <a href="{% url 'mySongs' %}">My Songs</a>
+              <div class="artist-avatar" id="avatarToggle" onclick="toggleDisplay('artistPopup')">
+                {{ artist.stage_name|slice:":1"|upper }}
+              </div>
+            {% endif %}
+            
+            <a href="{% url 'dashboard' %}">Dashboard</a>
+            <a href="{% url 'logout' %}">Logout</a>
+          {% else %}
+            <a href="{% url 'register' %}">Register</a>
+            <a href="{% url 'login' %}">Login</a>
+          {% endif %}
+        </div>
+      </nav>
+
+      {% if user.is_artist %}
+      <div id="artistPopup" class="artist-popup">
+        <h3>🎭 Artist Profile</h3>
+        <p><strong>Stage Name:</strong> {{ artist.stage_name }}</p>
+        <p><strong>Genre:</strong> {{ artist.genre }}</p>
+        <p><strong>Bio:</strong> {{ user.bio|default:"No bio available" }}</p>
+      </div>
+      {% endif %}
+    </header>
+<div id="toast-container" class="toast-container"></div>
+    <div class="messages" id="messageBox">
+      {% if messages %} 
+        {% for msg in messages %}
+          <div class="message {{ msg.tags }}">{{ msg }}</div>
+        {% endfor %} 
+      {% endif %}
+    </div>
+
+    <div class="container">
+      <div class="content">
+        {% block content %}{% endblock content %}
+      </div>
+    </div>
+
+    {% if user.is_authenticated %}
+      <button id="createPlaylistButton" onclick="toggleDisplay('createFormContainer')">Create new playlist</button>
+
+      <div id="createFormContainer">
+        <form id="playlist-form">
+          <label>Title</label>
+          <input type="text" name="title" required />
+
+          <label>Visibility</label>
+          <select name="visibility">
+            <option value="public">Public</option>
+            <option value="private">Private</option>
+          </select>
+
+          <button type="submit">Create Playlist</button>
+        </form>
+      </div>
+    {% endif %}
+
+    <script>
+      // Global Toggle Function
+      function toggleDisplay(targetId) {
+        const target = document.getElementById(targetId);
+        if (target) {
+          const isHidden = getComputedStyle(target).display === "none";
+          target.style.display = isHidden ? "block" : "none";
+        }
+      }
+
+      // Close Popups when clicking outside
+      window.addEventListener('click', function(e) {
+        const popup = document.getElementById('artistPopup');
+        const avatar = document.getElementById('avatarToggle');
+        if (popup && popup.style.display === 'block') {
+          if (!popup.contains(e.target) && !avatar.contains(e.target)) {
+            popup.style.display = 'none';
+          }
+        }
+      });
+
+      // Auto-hide messages
+      setTimeout(() => {
+        const box = document.getElementById("messageBox");
+        if (box) {
+          box.style.opacity = "0";
+          box.style.transition = "opacity 0.5s ease";
+          setTimeout(() => (box.style.display = "none"), 500);
+        }
+      }, 5000);
+
+      // Search Logic
+      const input = document.getElementById("search-input");
+      const resultsDiv = document.getElementById("results");
+      let timeout = null;
+
+      input.addEventListener("input", function () {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+          const query = input.value.trim();
+          if (query === "") {
+            resultsDiv.innerHTML = "";
+            return;
+          }
+          fetch(`/func/search/?q=${encodeURIComponent(query)}`)
+            .then((res) => res.json())
+            .then((data) => displayResults(data))
+            .catch(() => {});
+        }, 300);
+      });
+
+      function displayResults(data) {
+        resultsDiv.innerHTML = "";
+        if (data.length === 0) {
+          resultsDiv.innerHTML = "<div class='artist-card'>No results found</div>";
+          return;
+        }
+        data.forEach((item) => {
+          const div = document.createElement("div");
+          div.classList.add("artist-card");
+          div.innerHTML = `<a href="/func/search/artist/?q=${encodeURIComponent(item.artist)}">${item.artist}</a>`;
+          resultsDiv.appendChild(div);
+        });
+      }
+
+      // Playlist AJAX
+      const playlistForm = document.getElementById("playlist-form");
+      if(playlistForm) {
+          playlistForm.addEventListener("submit", function (e) {
+          e.preventDefault();
+          const formData = new FormData(this);
+          fetch("/playlist/create/", {
+            method: "POST",
+            headers: {
+              "X-CSRFToken": document.cookie.split("; ").find(row => row.startsWith("csrftoken="))?.split("=")[1],
+            },
+            body: formData,
+          })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.success) {
+                alert("Playlist Created!");
+                this.reset();
+                toggleDisplay('createFormContainer');
+            }
+          });
+        });
+      }
+
+    // 3. Display Logic
+    function displayResults_for_songs(data,print_if_no_results) {
+      search_results_for_album_song.innerHTML = "";
+
+      if (data.length === 0) {
+        search_results_for_album_song.innerHTML =print_if_no_results;       
+        return;
+      }
+
+      data.forEach((item) => {
+        const div = document.createElement("div");
+        div.classList.add("song-card");
+        div.style.borderBottom = "1px solid #eee";
+        div.style.padding = "5px";
+
+        // Title
+        const title = document.createElement("p");
+        title.innerText = item.title;
+
+        // Audio Element
+        const play = document.createElement("div");
+        play.classList.add("play");
+        const audio = document.createElement("audio");
+        audio.controls = true; // Added controls so you can actually hear it
+        audio.src = item.url;
+        play.appendChild(audio);
+
+        // Add Button
+        const button = document.createElement("button");
+        button.innerText = "Add to Album";
+        // Pass the item ID to your add function
+        button.onclick = function () {
+          add_this_song_to_this_album(item.id);
+        };
+
+        div.appendChild(title);
+        div.appendChild(play);
+        div.appendChild(button);
+        search_results_for_album_song.appendChild(div);
+      });
+    }
+    function showToast(message) {
+        const container = document.getElementById("toast-container");
+        
+        // Create toast element
+        const toast = document.createElement("div");
+        toast.className = "toast";
+        toast.innerHTML = `
+            <span>${message}</span>
+            <span style="margin-left:15px; cursor:pointer; opacity:0.5" onclick="this.parentElement.remove()">×</span>
+        `;
+
+        container.appendChild(toast);
+
+        // Auto-remove after 3 seconds
+        setTimeout(() => {
+            toast.style.animation = "fadeOut 0.5s ease forwards";
+            setTimeout(() => {
+                toast.remove();
+            }, 500);
+        }, 3000);
+    }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Artist{% endblock title %}
+{% block content %}
+<h1>Artist Page</h1>
+
+{% for dic in data %}
+<div class="info" data-id="{{ dic.id }}">
+    {% for key, value in dic.items %}
+        {% if key == 'total_followers' %}
+            <span><strong>{{ key|capfirst }}</strong>:</span>
+            <span class="followers_count">{{ value }}</span><br>
+        {% else %}
+            <span><strong>{{ key|capfirst }}</strong>:</span>
+            <span>{{ value }}</span><br>
+        {% endif %}
+    {% endfor %}
+
+    <!-- Follow Button -->
+    <button type="button" class="follow_button {% if user in dic.followers.all %}unfollow{% endif %}">
+        {% if user in dic.followers.all %}
+            Unfollow
+        {% else %}
+            Follow
+        {% endif %}
+    </button>
+</div>
+<hr>
+{% endfor %}
+
+<style>
+.follow_button {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    background: #38bdf8;
+    color: white;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.2s ease;
+}
+
+.follow_button.unfollow {
+    background: #f87171;
+}
+
+.follow_button:hover {
+    opacity: 0.9;
+}
+
+</style>
+
+<script>
+document.querySelectorAll(".follow_button").forEach(button => {
+    button.addEventListener("click", () => {
+        const infoDiv = button.closest(".info");
+        const artistName = infoDiv.dataset.id;
+        const followersCount = infoDiv.querySelector(".followers_count");
+
+        fetch(`/interaction/toggle_follows/?q=${encodeURIComponent(artistName)}`)
+            .then(res => res.json())
+            .then(data => {
+                console.log(data);
+                if(data.status === "followed") {
+                    button.innerText = "Unfollow";
+                    button.classList.add("unfollow");
+                } else if(data.status === "unfollowed") {
+                    button.innerText = "Follow";
+                    button.classList.remove("unfollow");
+                }
+
+                // Update follower count
+                if(data.total_followers !== undefined){
+                    followersCount.innerText = `${data.total_followers} followers`;
+                }
+            })
+            .catch();
+    });
+});
+</script>
+
+{% endblock content %}
